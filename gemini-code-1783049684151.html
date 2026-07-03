@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>モチベ体重計 - 増えても減っても応援アプリ</title>
+    <style>
+        :root {
+            --primary-color: #6c5ce7;
+            --success-color: #00b894;
+            --warning-color: #ff7675;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #2d3436;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px 10px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+
+        header p {
+            font-size: 0.9rem;
+            color: #636e72;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        /* キャラクターメッセージエリア */
+        .character-box {
+            background: #f1f2f6;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            position: relative;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            border-left: 5px solid var(--primary-color);
+        }
+
+        .character-avatar {
+            font-size: 2rem;
+            margin-right: 15px;
+        }
+
+        .message-text {
+            font-size: 0.95rem;
+            font-weight: bold;
+        }
+
+        /* フォームエリア */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 14px;
+            font-size: 1.4rem;
+            border: 2px solid #dfe6e9;
+            border-radius: 10px;
+            outline: none;
+            text-align: center;
+            transition: border-color 0.3s;
+        }
+
+        input[type="number"]:focus {
+            border-color: var(--primary-color);
+        }
+
+        .unit {
+            position: absolute;
+            right: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #b2bec3;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+            width: 100%;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn:disabled {
+            background-color: #b2bec3;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .counter-badge {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #636e72;
+            margin-top: 5px;
+        }
+
+        /* 履歴エリア */
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .history-header h3 {
+            font-size: 1.1rem;
+        }
+
+        .clear-btn {
+            background: none;
+            border: none;
+            color: #ff7675;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .history-list {
+            list-style: none;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f2f6;
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-date {
+            font-size: 0.85rem;
+            color: #636e72;
+        }
+
+        .history-weight {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .change-tag {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 20px;
+            color: white;
+            margin-left: 8px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .tag-up { background-color: var(--warning-color); }
+        .tag-down { background-color: var(--success-color); }
+        .tag-same { background-color: #b2bec3; }
+
+        /* レスポンシブ調整 */
+        @media (max-width: 360px) {
+            header h1 { font-size: 1.5rem; }
+            input[type="number"] { font-size: 1.2rem; }
+            .btn { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>モチベ体重計</h1>
+        <p>増えても減っても、私はあなたの味方です</p>
+    </header>
+
+    <div class="card">
+        <div class="character-box" id="characterBox">
+            <div class="character-avatar" id="avatar">🤖</div>
+            <div class="message-text" id="messageText">今日も測定お疲れ様！さあ、今の体重を教えてね。</div>
+        </div>
+
+        <div class="form-group">
+            <div class="input-wrapper">
+                <input type="number" id="weightInput" step="0.1" min="1" max="300" placeholder="0.0" required>
+                <span class="unit">kg</span>
+            </div>
+            <button class="btn" id="submitBtn" onclick="recordWeight()">記録する</button>
+            <div class="counter-badge" id="countBadge">本日の記録: 0 / 5 回</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="history-header">
+            <h3>これまでの記録</h3>
+            <button class="clear-btn" onclick="clearHistory()">全削除</button>
+        </div>
+        <ul class="history-list" id="historyList">
+            </ul>
+    </div>
+</div>
+
+<script>
+    // ローカルストレージのキー
+    const STORAGE_KEY = 'weight_tracker_records';
+
+    // メッセージ集
+    const MESSAGES = {
+        up: [
+            "ちょっと増えちゃった？…こ、これくらい誤差よ！次は少しだけ歩く距離を伸ばしてみよ？応援してるから！",
+            "あ、ちょっと増えてる。でも、それはあなたが今日を生きるために必要なエネルギーを蓄えた証拠！明日からまたボチボチいこ？",
+            "ふーん、増えたんだ。…って、そんなに落ち込まないで！ここから減らしていくのが楽しいんじゃない。付き合ってあげるわよ。"
+        ],
+        down: [
+            "すごい！！減ってるじゃない！あなたの努力、ちゃんと結果に出てるよ！この調子で突っ走ろうー！✨",
+            "やったね！素晴らしい減少です！やっぱり頑張りは裏切らないね。今日のご褒美は私の大絶賛だよ！おめでとう！🎉",
+            "おおお！減ってる！自分のことのように嬉しいな。本当に毎日よく頑張ってるね。尊敬しちゃうぞ！"
+        ],
+        same: [
+            "キープだね！体重を維持するのだって立派な才能だよ。今日もバッチリ安定してて素晴らしい！",
+            "前回と同じ！現状維持は、裏でしっかりとコントロールできている証拠。明日もこの調子でいこう！"
+        ]
+    };
+
+    // 初期化処理
+    document.addEventListener('DOMContentLoaded', () => {
+        updateUI();
+    });
+
+    // データの取得
+    function getRecords() {
+        const data = localStorage.getItem(STORAGE_KEY);
+        return data ? JSON.parse(data) : [];
+    }
+
+    // 今日の記録回数をカウント
+    function getTodayCount(records) {
+        const todayStr = new Date().toLocaleDateString();
+        return records.filter(r => new Date(r.date).toLocaleDateString() === todayStr).length;
+    }
+
+    // 記録ボタンを押した時の処理
+    function recordWeight() {
+        const input = document.getElementById('weightInput');
+        const weight = parseFloat(input.value);
+
+        if (isNaN(weight) || weight <= 0) {
+            alert('正しい体重を入力してください（例: 60.5）');
+            return;
+        }
+
+        // 小数点第1位に丸める
+        const formattedWeight = Math.round(weight * 10) / 10;
+
+        const records = getRecords();
+        const todayCount = getTodayCount(records);
+
+        if (todayCount >= 5) {
+            alert('本日の記録上限（5回）に達しました。明日また記録してくださいね！');
+            return;
+        }
+
+        // 変化の計算（1つ前のデータと比較）
+        let change = 'first'; 
+        if (records.length > 0) {
+            const lastWeight = records[0].weight; // 最新のものは配列の先頭にある前提
+            if (formattedWeight > lastWeight) {
+                change = 'up';
+            } else if (formattedWeight < lastWeight) {
+                change = 'down';
+            } else {
+                change = 'same';
+            }
+        }
+
+        // 新しいレコード
+        const newRecord = {
+            id: Date.now(),
+            date: new Date().toISOString(),
+            weight: formattedWeight,
+            change: change
+        };
+
+        // 配列の先頭に追加して保存
+        records.unshift(newRecord);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+
+        // 入力をクリア
+        input.value = '';
+
+        // UIの更新とメッセージ表示
+        updateUI();
+        triggerCheer(change);
+    }
+
+    // UIを最新の状態にする
+    function updateUI() {
+        const records = getRecords();
+        const todayCount = getTodayCount(records);
+
+        // カウンターの更新
+        const countBadge = document.getElementById('countBadge');
+        countBadge.innerText = `本日の記録: ${todayCount} / 5 回`;
+
+        // 5回記録したら入力を無効化
+        const submitBtn = document.getElementById('submitBtn');
+        const weightInput = document.getElementById('weightInput');
+        if (todayCount >= 5) {
+            submitBtn.disabled = true;
+            weightInput.disabled = true;
+            submitBtn.innerText = '本日はこれ以上記録できません';
+        } else {
+            submitBtn.disabled = false;
+            weightInput.disabled = false;
+            submitBtn.innerText = '記録する';
+        }
+
+        // 履歴リストの描画
+        const historyList = document.getElementById('historyList');
+        historyList.innerHTML = '';
+
+        if (records.length === 0) {
+            historyList.innerHTML = '<li class="history-item" style="justify-content: center; color: #b2bec3;">記録がまだありません</li>';
+            return;
+        }
+
+        records.forEach(item => {
+            const li = document.createElement('li');
+            li.className = 'history-item';
+
+            const dateObj = new Date(item.date);
+            const dateStr = `${dateObj.getMonth() + 1}/${dateObj.getDate()} ${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}`;
+
+            let tagHtml = '';
+            if (item.change === 'up') tagHtml = '<span class="change-tag tag-up">＋増</span>';
+            if (item.change === 'down') tagHtml = '<span class="change-tag tag-down">－減</span>';
+            if (item.change === 'same') tagHtml = '<span class="change-tag tag-same">維持</span>';
+
+            li.innerHTML = `
+                <span class="history-date">${dateStr}</span>
+                <div>
+                    <span class="history-weight">${item.weight.toFixed(1)} kg</span>
+                    ${tagHtml}
+                </div>
+            `;
+            historyList.appendChild(li);
+        });
+    }
+
+    // 励ましメッセージのアニメーションと切り替え
+    function triggerCheer(change) {
+        const avatar = document.getElementById('avatar');
+        const messageText = document.getElementById('messageText');
+        const charBox = document.getElementById('characterBox');
+
+        let msg = "";
+        let emoji = "🤖";
+
+        if (change === 'first') {
+            msg = "初記録ナイス！これから一緒に少しずつ頑張っていこうね。私はいつでもここにいるよ！";
+            emoji = "✨";
+        } else {
+            const msgList = MESSAGES[change];
+            msg = msgList[Math.floor(Math.random() * msgList.length)];
+            
+            if (change === 'up') emoji = "お、おぅ…(； ･`д･´)";
+            if (change === 'down') emoji = "歓喜！ヾ(*´∀｀*)ﾉ";
+            if (change === 'same') emoji = "キープ！(｀･ω･´)ゞ";
+        }
+
+        // メッセージ反映
+        avatar.innerText = emoji.length > 2 ? "🤖" : emoji; // 長すぎる顔文字はアバター外に逃がすか、そのまま表示
+        if(emoji.length > 2) {
+            messageText.innerHTML = `<span style="font-size:1.2rem">${emoji}</span><br>${msg}`;
+        } else {
+            messageText.innerText = msg;
+        }
+
+        // ちょっとしたポップアップアニメーション演出
+        charBox.style.transform = 'scale(1.03)';
+        charBox.style.transition = 'transform 0.2s';
+        setTimeout(() => {
+            charBox.style.transform = 'scale(1)';
+        }, 200);
+    }
+
+    // 履歴をクリア
+    function clearHistory() {
+        if (confirm('これまでの体重記録をすべて削除しますか？')) {
+            localStorage.removeItem(STORAGE_KEY);
+            document.getElementById('avatar').innerText = "🤖";
+            document.getElementById('messageText').innerText = "データをリセットしたよ。また新しい気持ちで始めよう！";
+            updateUI();
+        }
+    }
+</script>
+
+</body>
+</html>
