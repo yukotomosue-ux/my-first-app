@@ -1,849 +1,449 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Modern ToDo App</title>
-  <style>
-    /* --- CSS変数（テーマ管理） --- */
-    :root {
-      --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-      --card-bg: rgba(255, 255, 255, 0.9);
-      --text-main: #2d3748;
-      --text-muted: #718096;
-      --primary: #4f46e5;
-      --primary-hover: #4338ca;
-      --primary-light: #e0e7ff;
-      --danger: #ef4444;
-      --danger-hover: #dc2626;
-      --danger-light: #fee2e2;
-      --success: #10b981;
-      --border-color: #e2e8f0;
-      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-      --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-      --radius: 16px;
-      --radius-sm: 8px;
-      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>モチベ体重計 - 増えても減っても応援アプリ</title>
+    <style>
+        :root {
+            --primary-color: #6c5ce7;
+            --success-color: #00b894;
+            --warning-color: #ff7675;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #2d3436;
+        }
 
-    /* ダークモード定義 */
-    [data-theme="dark"] {
-      --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-      --card-bg: rgba(30, 41, 59, 0.95);
-      --text-main: #f1f5f9;
-      --text-muted: #94a3b8;
-      --primary: #6366f1;
-      --primary-hover: #4f46e5;
-      --primary-light: #312e81;
-      --danger: #f87171;
-      --danger-hover: #ef4444;
-      --danger-light: #7f1d1d;
-      --success: #34d399;
-      --border-color: #334155;
-      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
-      --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
-    }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+        }
 
-    /* --- リセット＆基本設定 --- */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px 10px;
+        }
 
-    body {
-      background: var(--bg-gradient);
-      color: var(--text-main);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding: 40px 20px;
-      transition: var(--transition);
-    }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
 
-    /* --- コンテナとカードレイアウト --- */
-    .app-container {
-      width: 100%;
-      max-width: 540px;
-      background: var(--card-bg);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 30px;
-      transition: var(--transition);
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
 
-    .app-container:hover {
-      box-shadow: var(--shadow-hover);
-    }
+        header h1 {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            font-weight: 700;
+        }
 
-    /* --- ヘッダー --- */
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+        header p {
+            font-size: 0.9rem;
+            color: #636e72;
+        }
 
-    .header h1 {
-      font-size: 1.8rem;
-      font-weight: 800;
-      background: linear-gradient(to right, var(--primary), #ec4899);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      letter-spacing: -0.5px;
-    }
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
 
-    /* テーマ切り替えボタン */
-    .theme-toggle-btn {
-      background: transparent;
-      border: 1px solid var(--border-color);
-      color: var(--text-main);
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: var(--transition);
-    }
+        /* キャラクターメッセージエリア */
+        .character-box {
+            background: #f1f2f6;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            position: relative;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            border-left: 5px solid var(--primary-color);
+        }
 
-    .theme-toggle-btn:hover {
-      background: var(--border-color);
-      transform: scale(1.05);
-    }
+        .character-avatar {
+            font-size: 2rem;
+            margin-right: 15px;
+        }
 
-    .theme-toggle-btn svg {
-      width: 20px;
-      height: 20px;
-      fill: currentColor;
-    }
+        .message-text {
+            font-size: 0.95rem;
+            font-weight: bold;
+        }
 
-    /* テーマ別アイコン制御 */
-    .sun-icon { display: none; }
-    .moon-icon { display: block; }
-    [data-theme="dark"] .sun-icon { display: block; }
-    [data-theme="dark"] .moon-icon { display: none; }
+        /* フォームエリア */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
 
-    /* --- 進捗メーター --- */
-    .progress-container {
-      background: var(--border-color);
-      height: 8px;
-      width: 100%;
-      border-radius: 4px;
-      overflow: hidden;
-      margin-top: 4px;
-    }
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
 
-    .progress-bar {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, var(--primary), var(--success));
-      border-radius: 4px;
-      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    }
+        input[type="number"] {
+            width: 100%;
+            padding: 14px;
+            font-size: 1.4rem;
+            border: 2px solid #dfe6e9;
+            border-radius: 10px;
+            outline: none;
+            text-align: center;
+            transition: border-color 0.3s;
+        }
 
-    .stats-summary {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      font-weight: 500;
-    }
+        input[type="number"]:focus {
+            border-color: var(--primary-color);
+        }
 
-    .stats-badge {
-      background: var(--primary-light);
-      color: var(--primary);
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 700;
-    }
+        .unit {
+            position: absolute;
+            right: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #b2bec3;
+        }
 
-    /* --- タスク入力エリア --- */
-    .input-form {
-      display: flex;
-      gap: 12px;
-    }
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+            width: 100%;
+        }
 
-    .todo-input {
-      flex: 1;
-      padding: 14px 18px;
-      border: 2px solid var(--border-color);
-      border-radius: var(--radius-sm);
-      background: transparent;
-      color: var(--text-main);
-      font-size: 1rem;
-      outline: none;
-      transition: var(--transition);
-    }
+        .btn:active {
+            transform: scale(0.98);
+        }
 
-    .todo-input:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
-    }
+        .btn:disabled {
+            background-color: #b2bec3;
+            cursor: not-allowed;
+            transform: none;
+        }
 
-    .todo-input::placeholder {
-      color: var(--text-muted);
-      opacity: 0.7;
-    }
+        .counter-badge {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #636e72;
+            margin-top: 5px;
+        }
 
-    .add-btn {
-      background: var(--primary);
-      color: white;
-      border: none;
-      padding: 0 20px;
-      border-radius: var(--radius-sm);
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: var(--transition);
-      min-height: 48px;
-    }
+        /* 履歴エリア */
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
 
-    .add-btn:hover {
-      background: var(--primary-hover);
-      transform: translateY(-1px);
-    }
+        .history-header h3 {
+            font-size: 1.1rem;
+        }
 
-    .add-btn:active {
-      transform: translateY(0);
-    }
+        .clear-btn {
+            background: none;
+            border: none;
+            color: #ff7675;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
 
-    /* --- フィルタータブ --- */
-    .filter-tabs {
-      display: flex;
-      border-bottom: 1px solid var(--border-color);
-      gap: 8px;
-    }
+        .history-list {
+            list-style: none;
+            max-height: 250px;
+            overflow-y: auto;
+        }
 
-    .tab-btn {
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      padding: 10px 16px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      cursor: pointer;
-      position: relative;
-      transition: var(--transition);
-      padding-bottom: 12px;
-    }
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f2f6;
+        }
 
-    .tab-btn:hover {
-      color: var(--text-main);
-    }
+        .history-item:last-child {
+            border-bottom: none;
+        }
 
-    .tab-btn.active {
-      color: var(--primary);
-    }
+        .history-date {
+            font-size: 0.85rem;
+            color: #636e72;
+        }
 
-    .tab-btn.active::after {
-      content: '';
-      position: absolute;
-      bottom: -1px;
-      left: 0;
-      width: 100%;
-      height: 3px;
-      background: var(--primary);
-      border-radius: 3px 3px 0 0;
-    }
+        .history-weight {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
 
-    /* --- タスクリスト --- */
-    .todo-list-container {
-      position: relative;
-      min-height: 150px;
-    }
+        .change-tag {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 20px;
+            color: white;
+            margin-left: 8px;
+            display: inline-block;
+            vertical-align: middle;
+        }
 
-    .todo-list {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
+        .tag-up { background-color: var(--warning-color); }
+        .tag-down { background-color: var(--success-color); }
+        .tag-same { background-color: #b2bec3; }
 
-    .todo-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 16px;
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-sm);
-      transition: var(--transition);
-      animation: fadeIn 0.3s ease;
-    }
-
-    .todo-item:hover {
-      transform: translateX(4px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-      border-color: var(--primary);
-    }
-
-    /* フェードインアニメーション */
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* 削除アニメーション用のクラス */
-    .todo-item.removing {
-      opacity: 0;
-      transform: scale(0.9) translateY(-10px);
-      transition: var(--transition);
-    }
-
-    /* チェックボックスとコンテンツ */
-    .todo-content {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex: 1;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    /* カスタムチェックボックス */
-    .custom-checkbox {
-      width: 22px;
-      height: 22px;
-      border: 2px solid var(--border-color);
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: var(--transition);
-      flex-shrink: 0;
-    }
-
-    .custom-checkbox svg {
-      width: 12px;
-      height: 12px;
-      fill: none;
-      stroke: white;
-      stroke-width: 3;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      opacity: 0;
-      transform: scale(0.5);
-      transition: var(--transition);
-    }
-
-    /* チェック完了状態のスタイリング */
-    .todo-item.completed .custom-checkbox {
-      background: var(--success);
-      border-color: var(--success);
-    }
-
-    .todo-item.completed .custom-checkbox svg {
-      opacity: 1;
-      transform: scale(1);
-    }
-
-    .todo-text {
-      font-size: 0.95rem;
-      font-weight: 500;
-      color: var(--text-main);
-      word-break: break-all;
-      transition: var(--transition);
-    }
-
-    .todo-item.completed .todo-text {
-      color: var(--text-muted);
-      text-decoration: line-through;
-      opacity: 0.6;
-    }
-
-    /* 削除ボタン */
-    .delete-btn {
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      width: 36px;
-      height: 36px;
-      border-radius: var(--radius-sm);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: var(--transition);
-      opacity: 0.6;
-    }
-
-    .delete-btn:hover {
-      background: var(--danger-light);
-      color: var(--danger);
-      opacity: 1;
-    }
-
-    .delete-btn svg {
-      width: 18px;
-      height: 18px;
-    }
-
-    /* --- 空の状態 (Empty State) --- */
-    .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 40px 20px;
-      color: var(--text-muted);
-      animation: fadeIn 0.4s ease;
-    }
-
-    .empty-state svg {
-      width: 80px;
-      height: 80px;
-      margin-bottom: 16px;
-      opacity: 0.6;
-    }
-
-    .empty-state h3 {
-      font-size: 1.1rem;
-      font-weight: 600;
-      margin-bottom: 6px;
-      color: var(--text-main);
-    }
-
-    .empty-state p {
-      font-size: 0.85rem;
-    }
-
-    /* --- トースト通知 --- */
-    .toast-container {
-      position: fixed;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 1000;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      pointer-events: none;
-    }
-
-    .toast {
-      background: var(--text-main);
-      color: var(--card-bg);
-      padding: 12px 24px;
-      border-radius: 30px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      opacity: 0;
-      transform: translateY(20px);
-      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-
-    .toast.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    /* --- レスポンシブ設計 --- */
-    @media (max-width: 600px) {
-      body {
-        padding: 16px 12px;
-      }
-
-      .app-container {
-        padding: 20px 16px;
-        gap: 20px;
-      }
-
-      .header h1 {
-        font-size: 1.5rem;
-      }
-
-      .input-form {
-        flex-direction: column;
-        gap: 10px;
-      }
-
-      .todo-input {
-        padding: 12px 14px;
-        font-size: 0.95rem;
-      }
-
-      .add-btn {
-        justify-content: center;
-        padding: 12px;
-      }
-    }
-  </style>
+        /* レスポンシブ調整 */
+        @media (max-width: 360px) {
+            header h1 { font-size: 1.5rem; }
+            input[type="number"] { font-size: 1.2rem; }
+            .btn { font-size: 1rem; }
+        }
+    </style>
 </head>
 <body>
 
-  <!-- メインアプリケーションコンテナ -->
-  <main class="app-container">
-    
-    <!-- ヘッダーエリア -->
-    <header class="header">
-      <div>
-        <h1>ToDo</h1>
-        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;" id="current-date"></p>
-      </div>
-      <!-- テーマ切り替えトグル -->
-      <button class="theme-toggle-btn" id="theme-toggle" aria-label="テーマの切り替え">
-        <!-- 月のアイコン (ダーク用) -->
-        <svg class="moon-icon" viewBox="0 0 24 24">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-        </svg>
-        <!-- 太陽のアイコン (ライト用) -->
-        <svg class="sun-icon" viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="5"></circle>
-          <line x1="12" y1="1" x2="12" y2="3"></line>
-          <line x1="12" y1="21" x2="12" y2="23"></line>
-          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-          <line x1="1" y1="12" x2="3" y2="12"></line>
-          <line x1="21" y1="12" x2="23" y2="12"></line>
-          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-          <line x1="18.36" y1="4.22" x2="19.78" y2="5.64"></line>
-        </svg>
-      </button>
+<div class="container">
+    <header>
+        <h1>モチベ体重計</h1>
+        <p>増えても減っても、私はあなたの味方です</p>
     </header>
 
-    <!-- 進捗バー＆スタッツ -->
-    <section>
-      <div class="stats-summary">
-        <div>
-          タスク進捗 <span id="progress-text">0/0</span>
+    <div class="card">
+        <div class="character-box" id="characterBox">
+            <div class="character-avatar" id="avatar">🤖</div>
+            <div class="message-text" id="messageText">今日も測定お疲れ様！さあ、今の体重を教えてね。</div>
         </div>
-        <span class="stats-badge" id="completion-rate">0% 完了</span>
-      </div>
-      <div class="progress-container">
-        <div class="progress-bar" id="progress-bar"></div>
-      </div>
-    </section>
 
-    <!-- タスク追加入力 -->
-    <section>
-      <form class="input-form" id="todo-form" onsubmit="event.preventDefault();">
-        <input 
-          type="text" 
-          class="todo-input" 
-          id="todo-input" 
-          placeholder="新しいタスクを入力..." 
-          maxlength="80"
-          autocomplete="off"
-          required
-        >
-        <button type="submit" class="add-btn" id="add-btn">
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          追加
-        </button>
-      </form>
-    </section>
+        <div class="form-group">
+            <div class="input-wrapper">
+                <input type="number" id="weightInput" step="0.1" min="1" max="300" placeholder="0.0" required>
+                <span class="unit">kg</span>
+            </div>
+            <button class="btn" id="submitBtn" onclick="recordWeight()">記録する</button>
+            <div class="counter-badge" id="countBadge">本日の記録: 0 / 5 回</div>
+        </div>
+    </div>
 
-    <!-- フィルターナビゲーション -->
-    <nav class="filter-tabs">
-      <button class="tab-btn active" data-filter="all">すべて</button>
-      <button class="tab-btn" data-filter="active">未完了</button>
-      <button class="tab-btn" data-filter="completed">完了</button>
-    </nav>
+    <div class="card">
+        <div class="history-header">
+            <h3>これまでの記録</h3>
+            <button class="clear-btn" onclick="clearHistory()">全削除</button>
+        </div>
+        <ul class="history-list" id="historyList">
+            </ul>
+    </div>
+</div>
 
-    <!-- タスクリスト部 -->
-    <section class="todo-list-container">
-      <ul class="todo-list" id="todo-list">
-        <!-- JSで動的に追加されます -->
-      </ul>
-      
-      <!-- 空のステート -->
-      <div class="empty-state" id="empty-state" style="display: none;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-          <polyline points="22 4 12 14.01 9 11.01"></polyline>
-        </svg>
-        <h3 id="empty-title">タスクはありません</h3>
-        <p id="empty-desc">新しくタスクを追加して、1日を始めましょう！</p>
-      </div>
-    </section>
+<script>
+    // ローカルストレージのキー
+    const STORAGE_KEY = 'weight_tracker_records';
 
-  </main>
+    // メッセージ集
+    const MESSAGES = {
+        up: [
+            "ちょっと増えちゃった？…こ、これくらい誤差よ！次は少しだけ歩く距離を伸ばしてみよ？応援してるから！",
+            "あ、ちょっと増えてる。でも、それはあなたが今日を生きるために必要なエネルギーを蓄えた証拠！明日からまたボチボチいこ？",
+            "ふーん、増えたんだ。…って、そんなに落ち込まないで！ここから減らしていくのが楽しいんじゃない。付き合ってあげるわよ。"
+        ],
+        down: [
+            "すごい！！減ってるじゃない！あなたの努力、ちゃんと結果に出てるよ！この調子で突っ走ろうー！✨",
+            "やったね！素晴らしい減少です！やっぱり頑張りは裏切らないね。今日のご褒美は私の大絶賛だよ！おめでとう！🎉",
+            "おおお！減ってる！自分のことのように嬉しいな。本当に毎日よく頑張ってるね。尊敬しちゃうぞ！"
+        ],
+        same: [
+            "キープだね！体重を維持するのだって立派な才能だよ。今日もバッチリ安定してて素晴らしい！",
+            "前回と同じ！現状維持は、裏でしっかりとコントロールできている証拠。明日もこの調子でいこう！"
+        ]
+    };
 
-  <!-- トースト通知用のコンテナ -->
-  <div class="toast-container" id="toast-container"></div>
-
-  <!-- --- アプリケーションロジック (JavaScript) --- -->
-  <script>
+    // 初期化処理
     document.addEventListener('DOMContentLoaded', () => {
-      
-      // --- アプリケーション状態 ---
-      let todos = [];
-      let currentFilter = 'all';
+        updateUI();
+    });
 
-      // --- DOM要素取得 ---
-      const todoForm = document.getElementById('todo-form');
-      const todoInput = document.getElementById('todo-input');
-      const todoList = document.getElementById('todo-list');
-      const emptyState = document.getElementById('empty-state');
-      const emptyTitle = document.getElementById('empty-title');
-      const emptyDesc = document.getElementById('empty-desc');
-      const progressBar = document.getElementById('progress-bar');
-      const progressText = document.getElementById('progress-text');
-      const completionRate = document.getElementById('completion-rate');
-      const filterButtons = document.querySelectorAll('.tab-btn');
-      const themeToggle = document.getElementById('theme-toggle');
-      const toastContainer = document.getElementById('toast-container');
-      const currentDateElement = document.getElementById('current-date');
+    // データの取得
+    function getRecords() {
+        const data = localStorage.getItem(STORAGE_KEY);
+        return data ? JSON.parse(data) : [];
+    }
 
-      // --- 本日の日付を表示 ---
-      const updateDate = () => {
-        const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
-        currentDateElement.textContent = new Date().toLocaleDateString('ja-JP', options);
-      };
+    // 今日の記録回数をカウント
+    function getTodayCount(records) {
+        const todayStr = new Date().toLocaleDateString();
+        return records.filter(r => new Date(r.date).toLocaleDateString() === todayStr).length;
+    }
 
-      // --- テーマ設定 (ライト/ダーク) ---
-      const initTheme = () => {
-        // LocalStorage、あるいはシステムの好みをチェック
-        const savedTheme = localStorage.getItem('theme');
-        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        
-        if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
-          document.documentElement.setAttribute('data-theme', 'dark');
-        } else {
-          document.documentElement.setAttribute('data-theme', 'light');
+    // 記録ボタンを押した時の処理
+    function recordWeight() {
+        const input = document.getElementById('weightInput');
+        const weight = parseFloat(input.value);
+
+        if (isNaN(weight) || weight <= 0) {
+            alert('正しい体重を入力してください（例: 60.5）');
+            return;
         }
-      };
 
-      themeToggle.addEventListener('click', () => {
-        const currentTheme = document.documentElement.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        
-        document.documentElement.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        showToast(newTheme === 'dark' ? 'ダークモードに切り替えました' : 'ライトモードに切り替えました');
-      });
+        // 小数点第1位に丸める
+        const formattedWeight = Math.round(weight * 10) / 10;
 
-      // --- LocalStorageとの連携 ---
-      const loadTodos = () => {
-        const stored = localStorage.getItem('modern-todo-list');
-        if (stored) {
-          try {
-            todos = JSON.parse(stored);
-          } catch (e) {
-            todos = [];
-          }
+        const records = getRecords();
+        const todayCount = getTodayCount(records);
+
+        if (todayCount >= 5) {
+            alert('本日の記録上限（5回）に達しました。明日また記録してくださいね！');
+            return;
         }
-      };
 
-      const saveTodos = () => {
-        localStorage.setItem('modern-todo-list', JSON.stringify(todos));
-        updateStats();
-      };
-
-      // --- トースト通知生成 ---
-      const showToast = (message) => {
-        const toast = document.createElement('div');
-        toast.className = 'toast';
-        toast.innerHTML = `
-          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="color: var(--success)">
-            <polyline points="20 6 9 17 4 12"></polyline>
-          </svg>
-          <span>${message}</span>
-        `;
-        toastContainer.appendChild(toast);
-
-        // 微小な遅延をいれてCSSアニメーションをトリガー
-        setTimeout(() => toast.classList.add('show'), 10);
-
-        // 2.5秒後に削除
-        setTimeout(() => {
-          toast.classList.remove('show');
-          toast.addEventListener('transitionend', () => toast.remove());
-        }, 2500);
-      };
-
-      // --- 統計情報＆進捗バー更新 ---
-      const updateStats = () => {
-        const total = todos.length;
-        const completed = todos.filter(t => t.completed).length;
-        
-        progressText.textContent = `${completed}/${total}`;
-        
-        const rate = total === 0 ? 0 : Math.round((completed / total) * 100);
-        completionRate.textContent = `${rate}% 完了`;
-        progressBar.style.width = `${rate}%`;
-      };
-
-      // --- ToDoのレンダリング ---
-      const renderTodos = () => {
-        // 一度リストを空にする
-        todoList.innerHTML = '';
-
-        // フィルター処理
-        const filteredTodos = todos.filter(todo => {
-          if (currentFilter === 'active') return !todo.completed;
-          if (currentFilter === 'completed') return todo.completed;
-          return true; // 'all'
-        });
-
-        // データの有無によってビューの切り替え
-        if (filteredTodos.length === 0) {
-          todoList.style.display = 'none';
-          emptyState.style.display = 'flex';
-          
-          // フィルターごとに空状態のテキストを変更
-          if (currentFilter === 'active') {
-            emptyTitle.textContent = '未完了のタスクはありません';
-            emptyDesc.textContent = 'すべてのタスクが完了しています！素晴らしい仕事ですね。';
-          } else if (currentFilter === 'completed') {
-            emptyTitle.textContent = '完了したタスクがありません';
-            emptyDesc.textContent = 'タスクを完了させて、チェックを入れてみましょう！';
-          } else {
-            emptyTitle.textContent = 'タスクはありません';
-            emptyDesc.textContent = '新しいタスクを追加して、1日を始めましょう！';
-          }
-        } else {
-          todoList.style.display = 'flex';
-          emptyState.style.display = 'none';
-
-          // フィルタリングされたToDoを描画
-          filteredTodos.forEach(todo => {
-            const li = document.createElement('li');
-            li.className = `todo-item ${todo.completed ? 'completed' : ''}`;
-            li.dataset.id = todo.id;
-
-            li.innerHTML = `
-              <div class="todo-content">
-                <div class="custom-checkbox">
-                  <svg viewBox="0 0 24 24">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                </div>
-                <span class="todo-text">${escapeHTML(todo.text)}</span>
-              </div>
-              <button class="delete-btn" aria-label="タスクを削除">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="3 6 5 6 21 6"></polyline>
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                  <line x1="10" y1="11" x2="10" y2="17"></line>
-                  <line x1="14" y1="11" x2="14" y2="17"></line>
-                </svg>
-              </button>
-            `;
-
-            // 完了状態のトグルイベント
-            li.querySelector('.todo-content').addEventListener('click', () => toggleTodo(todo.id));
-            
-            // 削除イベント
-            li.querySelector('.delete-btn').addEventListener('click', (e) => {
-              e.stopPropagation();
-              deleteTodo(todo.id, li);
-            });
-
-            todoList.appendChild(li);
-          });
+        // 変化の計算（1つ前のデータと比較）
+        let change = 'first'; 
+        if (records.length > 0) {
+            const lastWeight = records[0].weight; // 最新のものは配列の先頭にある前提
+            if (formattedWeight > lastWeight) {
+                change = 'up';
+            } else if (formattedWeight < lastWeight) {
+                change = 'down';
+            } else {
+                change = 'same';
+            }
         }
-      };
 
-      // --- XSS防止用のエスケープ関数 ---
-      const escapeHTML = (string) => {
-        return string
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#x27;');
-      };
-
-      // --- タスク追加アクション ---
-      const addTodo = () => {
-        const text = todoInput.value.trim();
-        if (!text) return;
-
-        const newTodo = {
-          id: Date.now().toString(),
-          text: text,
-          completed: false,
-          createdAt: Date.now()
+        // 新しいレコード
+        const newRecord = {
+            id: Date.now(),
+            date: new Date().toISOString(),
+            weight: formattedWeight,
+            change: change
         };
 
-        // 配列の先頭に追加
-        todos.unshift(newTodo);
-        saveTodos();
-        
-        todoInput.value = '';
-        renderTodos();
-        showToast('タスクを追加しました');
-      };
+        // 配列の先頭に追加して保存
+        records.unshift(newRecord);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
 
-      // --- タスク完了トグル ---
-      const toggleTodo = (id) => {
-        todos = todos.map(todo => {
-          if (todo.id === id) {
-            const nextState = !todo.completed;
-            if (nextState) {
-              showToast('タスクを完了にしました！');
-            }
-            return { ...todo, completed: nextState };
-          }
-          return todo;
+        // 入力をクリア
+        input.value = '';
+
+        // UIの更新とメッセージ表示
+        updateUI();
+        triggerCheer(change);
+    }
+
+    // UIを最新の状態にする
+    function updateUI() {
+        const records = getRecords();
+        const todayCount = getTodayCount(records);
+
+        // カウンターの更新
+        const countBadge = document.getElementById('countBadge');
+        countBadge.innerText = `本日の記録: ${todayCount} / 5 回`;
+
+        // 5回記録したら入力を無効化
+        const submitBtn = document.getElementById('submitBtn');
+        const weightInput = document.getElementById('weightInput');
+        if (todayCount >= 5) {
+            submitBtn.disabled = true;
+            weightInput.disabled = true;
+            submitBtn.innerText = '本日はこれ以上記録できません';
+        } else {
+            submitBtn.disabled = false;
+            weightInput.disabled = false;
+            submitBtn.innerText = '記録する';
+        }
+
+        // 履歴リストの描画
+        const historyList = document.getElementById('historyList');
+        historyList.innerHTML = '';
+
+        if (records.length === 0) {
+            historyList.innerHTML = '<li class="history-item" style="justify-content: center; color: #b2bec3;">記録がまだありません</li>';
+            return;
+        }
+
+        records.forEach(item => {
+            const li = document.createElement('li');
+            li.className = 'history-item';
+
+            const dateObj = new Date(item.date);
+            const dateStr = `${dateObj.getMonth() + 1}/${dateObj.getDate()} ${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}`;
+
+            let tagHtml = '';
+            if (item.change === 'up') tagHtml = '<span class="change-tag tag-up">＋増</span>';
+            if (item.change === 'down') tagHtml = '<span class="change-tag tag-down">－減</span>';
+            if (item.change === 'same') tagHtml = '<span class="change-tag tag-same">維持</span>';
+
+            li.innerHTML = `
+                <span class="history-date">${dateStr}</span>
+                <div>
+                    <span class="history-weight">${item.weight.toFixed(1)} kg</span>
+                    ${tagHtml}
+                </div>
+            `;
+            historyList.appendChild(li);
         });
-        saveTodos();
-        renderTodos();
-      };
+    }
 
-      // --- タスク削除アクション ---
-      const deleteTodo = (id, element) => {
-        // 削除のアニメーションクラスを付与
-        element.classList.add('removing');
-        
-        // アニメーション完了後にDOM削除 & 配列の更新
-        element.addEventListener('transitionend', () => {
-          todos = todos.filter(todo => todo.id !== id);
-          saveTodos();
-          renderTodos();
-          showToast('タスクを削除しました');
-        }, { once: true });
-      };
+    // 励ましメッセージのアニメーションと切り替え
+    function triggerCheer(change) {
+        const avatar = document.getElementById('avatar');
+        const messageText = document.getElementById('messageText');
+        const charBox = document.getElementById('characterBox');
 
-      // --- フィルターボタンの設定 ---
-      filterButtons.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          filterButtons.forEach(b => b.classList.remove('active'));
-          e.target.classList.add('active');
-          
-          currentFilter = e.target.dataset.filter;
-          renderTodos();
-        });
-      });
+        let msg = "";
+        let emoji = "🤖";
 
-      // --- 送信フォームのハンドラ設定 ---
-      todoForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        addTodo();
-      });
+        if (change === 'first') {
+            msg = "初記録ナイス！これから一緒に少しずつ頑張っていこうね。私はいつでもここにいるよ！";
+            emoji = "✨";
+        } else {
+            const msgList = MESSAGES[change];
+            msg = msgList[Math.floor(Math.random() * msgList.length)];
+            
+            if (change === 'up') emoji = "お、おぅ…(； ･`д･´)";
+            if (change === 'down') emoji = "歓喜！ヾ(*´∀｀*)ﾉ";
+            if (change === 'same') emoji = "キープ！(｀･ω･´)ゞ";
+        }
 
-      // --- 初期起動セットアップ ---
-      updateDate();
-      initTheme();
-      loadTodos();
-      updateStats();
-      renderTodos();
-    });
-  </script>
+        // メッセージ反映
+        avatar.innerText = emoji.length > 2 ? "🤖" : emoji; // 長すぎる顔文字はアバター外に逃がすか、そのまま表示
+        if(emoji.length > 2) {
+            messageText.innerHTML = `<span style="font-size:1.2rem">${emoji}</span><br>${msg}`;
+        } else {
+            messageText.innerText = msg;
+        }
+
+        // ちょっとしたポップアップアニメーション演出
+        charBox.style.transform = 'scale(1.03)';
+        charBox.style.transition = 'transform 0.2s';
+        setTimeout(() => {
+            charBox.style.transform = 'scale(1)';
+        }, 200);
+    }
+
+    // 履歴をクリア
+    function clearHistory() {
+        if (confirm('これまでの体重記録をすべて削除しますか？')) {
+            localStorage.removeItem(STORAGE_KEY);
+            document.getElementById('avatar').innerText = "🤖";
+            document.getElementById('messageText').innerText = "データをリセットしたよ。また新しい気持ちで始めよう！";
+            updateUI();
+        }
+    }
+</script>
+
 </body>
 </html>
